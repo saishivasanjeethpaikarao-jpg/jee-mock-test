@@ -2,58 +2,46 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>JEE Main 2026 Ultra AI Mock</title>
+<title>JEE Daily AI Generator</title>
 
-<!-- KaTeX for math -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
 onload="renderMathInElement(document.body);"></script>
 
 <style>
-body{margin:0;font-family:Arial;background:#f3f6fb}
-header{background:#1f2937;color:white;padding:12px;font-size:18px}
+body{margin:0;font-family:Arial;background:#f3f4f6}
+header{background:#111827;color:white;padding:15px}
 #timer{float:right;font-weight:bold}
-.container{display:flex;height:92vh}
+.container{display:flex;height:90vh}
 .left{width:75%;padding:20px;overflow:auto}
 .right{width:25%;background:#e5e7eb;padding:10px;overflow:auto}
 .qbox{
-width:32px;height:32px;margin:4px;
+width:34px;height:34px;margin:4px;
 display:inline-flex;align-items:center;justify-content:center;
-border-radius:5px;cursor:pointer;font-size:12px
+border-radius:5px;font-size:12px;cursor:pointer
 }
 .notvisited{background:#fff;border:1px solid #aaa}
 .answered{background:#22c55e;color:white}
 .review{background:#8b5cf6;color:white}
 .visited{background:#facc15}
-.current{border:2px solid black}
-button{padding:8px 12px;margin:5px;border:none;border-radius:6px;cursor:pointer}
+button{padding:8px 14px;margin:6px;border:none;border-radius:6px;cursor:pointer}
 .save{background:#2563eb;color:white}
-.reviewbtn{background:#8b5cf6;color:white}
-.clear{background:#dc2626;color:white}
 .submit{background:#111827;color:white}
-.sectionbtn{background:#0ea5e9;color:white;margin:3px}
 </style>
 </head>
+
 <body>
 
 <header>
-JEE MAIN 2026 – ULTRA AI MODE
-<span id="timer">180:00</span>
+JEE DAILY HARD AI MOCK
+<span id="timer">90:00</span>
 </header>
-
-<div style="padding:10px">
-<button class="sectionbtn" onclick="changeSection('Physics')">Physics</button>
-<button class="sectionbtn" onclick="changeSection('Chemistry')">Chemistry</button>
-<button class="sectionbtn" onclick="changeSection('Maths')">Maths</button>
-</div>
 
 <div class="container">
 <div class="left">
 <div id="questionArea"></div>
 <button class="save" onclick="saveNext()">Save & Next</button>
-<button class="reviewbtn" onclick="markReview()">Mark for Review</button>
-<button class="clear" onclick="clearResponse()">Clear</button>
 <button class="submit" onclick="submitTest()">Submit</button>
 </div>
 <div class="right">
@@ -63,87 +51,117 @@ JEE MAIN 2026 – ULTRA AI MODE
 
 <script>
 
-// DAILY SEED
-let today=new Date().toDateString();
-let seed=today.length+today.charCodeAt(0);
+/* ================= BIG THEORY QUESTION BANK ================= */
 
-// Adaptive difficulty
-let lastScore=localStorage.getItem("jeeScore")||0;
-if(lastScore>240) seed+=50;
-if(lastScore<120) seed-=30;
+let bank = [
 
-function rand(){let x=Math.sin(seed++)*10000;return x-Math.floor(x);}
-function rInt(min,max){return Math.floor(rand()*(max-min+1))+min;}
+/* PHYSICS */
 
-const chapters={
-Physics:["Mechanics","Electrostatics","Current","Magnetism","Modern"],
-Chemistry:["Physical","Organic","Inorganic","Coordination","Thermo"],
-Maths:["Calculus","Algebra","Coordinate","Vector3D","Probability"]
-};
+{
+subject:"Physics",
+type:"mcq",
+question:"A block slides down rough incline (θ=30°). μ=0.2. Find acceleration.",
+options:["3.1","2.6","4.9","5"],
+answer:1
+},
 
-let questions=[];
+{
+subject:"Physics",
+type:"mcq",
+question:"Two capacitors C and 2C connected in parallel then series. Equivalent?",
+options:["2C/3","3C/2","C","C/3"],
+answer:0
+},
+
+{
+subject:"Physics",
+type:"numerical",
+question:"Half life = 5 days. After 20 days fraction left?"
+},
+
+/* CHEMISTRY */
+
+{
+subject:"Chemistry",
+type:"mcq",
+question:"Bond order of O2+ is:",
+options:["1","1.5","2","2.5"],
+answer:3
+},
+
+{
+subject:"Chemistry",
+type:"mcq",
+question:"Strongest acid:",
+options:["HF","HCl","HBr","HI"],
+answer:3
+},
+
+{
+subject:"Chemistry",
+type:"numerical",
+question:"pH of 10^-3 M HCl?"
+},
+
+/* MATHS */
+
+{
+subject:"Maths",
+type:"mcq",
+question:"If lim x→0 sinx/x = ?",
+options:["0","1","∞","-1"],
+answer:1
+},
+
+{
+subject:"Maths",
+type:"mcq",
+question:"Number of solutions |x²−1|=0",
+options:["1","2","3","4"],
+answer:1
+},
+
+{
+subject:"Maths",
+type:"numerical",
+question:"Determinant of [[1,2],[3,4]]"
+}
+
+];
+
+
+/* ========== DAILY SEED RANDOMIZER ========== */
+
+function shuffleByDate(arr){
+let today = new Date().toISOString().slice(0,10);
+let seed = today.split("-").join("");
+let random = parseInt(seed);
+return arr.sort(()=>0.5 - (Math.sin(random++)*10000)%1);
+}
+
+let questions = shuffleByDate([...bank]).slice(0,30);
+
+/* ================= TEST ENGINE ================= */
+
 let current=0;
 let responses={};
 let status={};
-let section="Physics";
 
-// GENERATE 90 QUESTIONS
-function generate(){
-for(let sub in chapters){
-for(let i=0;i<30;i++){
-
-let chapter=chapters[sub][i%5];
-let difficulty=(i<10)?"Moderate":"Hard";
-let a=rInt(2,9);
-let b=rInt(3,8);
-
-questions.push({
-subject:sub,
-chapter:chapter,
-type:(i<20)?"mcq":"numerical",
-sectionType:(i<20)?"A":"B",
-question:`
-[${sub} - ${chapter}]
-Given $$ v = ${a}\\sqrt{x} $$ and $$ F = ${b}x^2 $$,
-Find $$ a \\times b $$.
-`,
-options:[a*b,(a*b)+1,(a*b)-1,(a*b)+2],
-answer:0
-});
-}
-}
-}
-
-generate();
-
-// LOAD PALETTE
 function loadPalette(){
 let p=document.getElementById("palette");
 p.innerHTML="";
 questions.forEach((q,i)=>{
-if(q.subject===section){
 let box=document.createElement("div");
 box.className="qbox "+(status[i]||"notvisited");
 box.innerText=i+1;
 box.onclick=()=>{current=i;loadQuestion();}
 box.id="q"+i;
 p.appendChild(box);
-}
 });
 }
 
-function changeSection(sec){
-section=sec;
-current=questions.findIndex(q=>q.subject===section);
-loadPalette();
-loadQuestion();
-}
-
-// LOAD QUESTION
 function loadQuestion(){
 let q=questions[current];
-if(!q || q.subject!==section) return;
-
 if(!status[current]) status[current]="visited";
 
 let area=document.getElementById("questionArea");
@@ -162,7 +180,6 @@ renderMathInElement(area);
 updatePalette();
 }
 
-// SAVE
 function saveNext(){
 let q=questions[current];
 if(q.type==="mcq"){
@@ -174,23 +191,10 @@ let val=document.getElementById("num").value;
 if(val){responses[current]=val;status[current]="answered";}
 }
 current++;
+if(current>=questions.length) current=questions.length-1;
 loadQuestion();
 }
 
-// REVIEW
-function markReview(){
-status[current]="review";
-updatePalette();
-}
-
-// CLEAR
-function clearResponse(){
-delete responses[current];
-status[current]="visited";
-updatePalette();
-}
-
-// UPDATE PALETTE
 function updatePalette(){
 questions.forEach((q,i)=>{
 let box=document.getElementById("q"+i);
@@ -198,8 +202,9 @@ if(box) box.className="qbox "+(status[i]||"notvisited");
 });
 }
 
-// TIMER
-let total=180*60;
+/* TIMER */
+
+let total=90*60;
 let timer=document.getElementById("timer");
 let countdown=setInterval(()=>{
 let m=Math.floor(total/60);
@@ -209,51 +214,22 @@ total--;
 if(total<0){clearInterval(countdown);submitTest();}
 },1000);
 
-// SUBMIT
 function submitTest(){
 clearInterval(countdown);
-
 let score=0;
-let weak={};
-let sectionBcount={Physics:0,Chemistry:0,Maths:0};
-
 questions.forEach((q,i)=>{
-
-if(!weak[q.chapter]) weak[q.chapter]={c:0,t:0};
-weak[q.chapter].t++;
-
-if(q.sectionType==="B" && responses[i]!=undefined){
-if(sectionBcount[q.subject]>=5) return;
-sectionBcount[q.subject]++;
-}
-
-if(responses[i]==q.answer){
-score+=4;
-weak[q.chapter].c++;
-}
-else if(responses[i]!=undefined){
-score-=1;
+if(q.type==="mcq"){
+if(responses[i]==q.answer) score+=4;
+else if(responses[i]!=undefined) score-=1;
 }
 });
-
-localStorage.setItem("jeeScore",score);
-
-let weakText="";
-for(let ch in weak){
-let acc=(weak[ch].c/weak[ch].t)*100;
-if(acc<50) weakText+=ch+" ("+acc.toFixed(1)+"%)<br>";
+document.body.innerHTML=`<h2>Today's Score: ${score}</h2>`;
 }
 
-document.body.innerHTML=`
-<h2>Final Score: ${score} / 360</h2>
-<h3>Weak Chapters:</h3>
-${weakText||"None 🎯"}
-`;
-}
-
-// INIT
-changeSection("Physics");
+loadPalette();
+loadQuestion();
 
 </script>
+
 </body>
 </html>
