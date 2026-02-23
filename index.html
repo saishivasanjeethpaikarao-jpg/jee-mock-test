@@ -2,62 +2,221 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>JEE MAIN 2026 ULTRA MOCK</title>
+<title>JEE 2026 AI PRO MOCK</title>
 <style>
-body{margin:0;font-family:Arial;background:#f3f6fb}
-header{background:#1f2937;color:white;padding:12px;font-size:18px}
-#timer{float:right;font-weight:bold}
-.container{display:flex;height:92vh}
-.left{width:75%;padding:20px;overflow:auto}
-.right{width:25%;background:#e5e7eb;padding:10px;overflow:auto}
-.qbox{
-width:32px;height:32px;margin:4px;
-display:inline-flex;align-items:center;justify-content:center;
-border-radius:5px;cursor:pointer;font-size:12px
-}
-.notvisited{background:#fff;border:1px solid #aaa}
-.answered{background:#22c55e;color:white}
-.review{background:#8b5cf6;color:white}
-.visited{background:#facc15}
-.current{border:2px solid black}
-button{padding:8px 12px;margin:5px;border:none;border-radius:6px;cursor:pointer}
-.save{background:#2563eb;color:white}
-.reviewbtn{background:#8b5cf6;color:white}
-.clear{background:#dc2626;color:white}
-.submit{background:#111827;color:white}
-.sectionbtn{background:#0ea5e9;color:white;margin:3px}
+body{margin:0;font-family:Arial;background:#0f172a;color:white}
+header{background:#1e293b;padding:15px;text-align:center}
+.timer{color:#22c55e;font-size:18px}
+.container{padding:20px}
+.question{background:#1e293b;margin:10px 0;padding:15px;border-radius:8px}
+button{padding:8px 14px;margin:10px;background:#2563eb;color:white;border:none;border-radius:6px}
+.result{background:#16a34a;padding:15px;margin-top:20px;border-radius:10px}
+.analytics{background:#334155;padding:15px;margin-top:15px;border-radius:10px}
+input{margin:4px}
+.sectionTitle{font-size:20px;margin-top:25px;color:#38bdf8}
 </style>
 </head>
 <body>
 
 <header>
-JEE MAIN 2026 – ULTRA AI MODE
-<span id="timer">180:00</span>
+🏆 JEE MAIN 2026 — AI PRO MOCK SYSTEM
+<div class="timer" id="timer">Time Left: 180:00</div>
 </header>
 
-<div style="padding:10px">
-<button class="sectionbtn" onclick="changeSection('Physics')">Physics</button>
-<button class="sectionbtn" onclick="changeSection('Chemistry')">Chemistry</button>
-<button class="sectionbtn" onclick="changeSection('Maths')">Maths</button>
-</div>
-
 <div class="container">
-<div class="left">
-<div id="questionArea"></div>
-<button class="save" onclick="saveNext()">Save & Next</button>
-<button class="reviewbtn" onclick="markReview()">Mark for Review</button>
-<button class="clear" onclick="clearResponse()">Clear</button>
-<button class="submit" onclick="submitTest()">Submit</button>
-</div>
-<div class="right">
-<div id="palette"></div>
-</div>
+<div id="quiz"></div>
+<button onclick="submitTest()">Submit Test</button>
+<div id="result"></div>
 </div>
 
 <script>
 
+// =====================
+// DAILY AI SEED
+// =====================
+let today = new Date().toDateString();
+let seed = today.length + today.charCodeAt(0);
+
+function rand(){
+let x = Math.sin(seed++) * 10000;
+return x - Math.floor(x);
+}
+
+function rInt(min,max){
+return Math.floor(rand()*(max-min+1))+min;
+}
+
+// =====================
+// CHAPTER WEIGHTAGE
+// =====================
+const chapters = {
+Physics:["Mechanics","Electrostatics","Current Electricity","Magnetism","Modern Physics"],
+Chemistry:["Physical","Organic","Inorganic","Coordination","Thermo"],
+Maths:["Calculus","Algebra","Coordinate","Vector3D","Probability"]
+};
+
 let questions=[];
-let current=0;
-let responses={};
-let status={};
-let section="Physics";
+let weakTracker={};
+
+// =====================
+// GENERATE 90 QUESTIONS
+// =====================
+
+function generateSection(subject){
+
+let chapterList=chapters[subject];
+
+for(let i=0;i<20;i++){
+
+let chapter=chapterList[i%chapterList.length];
+let difficulty = (i<7)?"Easy":(i<14)?"Moderate":"Hard";
+
+let a=rInt(1,5);
+let b=rInt(5,15);
+
+questions.push({
+subject:subject,
+chapter:chapter,
+difficulty:difficulty,
+type:"mcq",
+question:`[${chapter} - ${difficulty}] If a=${a}, b=${b}, find a×b`,
+options:[a*b,(a*b)+1,(a*b)-1,(a*b)+2],
+answer:0
+});
+}
+
+for(let i=0;i<10;i++){
+
+let chapter=chapterList[i%chapterList.length];
+let difficulty="Hard";
+
+let x=rInt(2,10);
+
+questions.push({
+subject:subject,
+chapter:chapter,
+difficulty:difficulty,
+type:"numerical",
+question:`[${chapter} - Hard] Compute ${x}²`,
+answer:x*x
+});
+}
+
+}
+
+generateSection("Physics");
+generateSection("Chemistry");
+generateSection("Maths");
+
+// =====================
+// LOAD QUESTIONS
+// =====================
+
+let quiz=document.getElementById("quiz");
+
+questions.forEach((q,index)=>{
+
+let div=document.createElement("div");
+div.className="question";
+
+if(index%30==0){
+div.innerHTML+=`<div class="sectionTitle">${q.subject}</div>`;
+}
+
+if(q.type=="mcq"){
+div.innerHTML+=`
+<b>Q${index+1}</b> ${q.question}<br><br>
+${q.options.map((opt,i)=>
+`<input type="radio" name="q${index}" value="${i}"> ${opt}<br>`
+).join("")}
+`;
+}
+else{
+div.innerHTML+=`
+<b>Q${index+1}</b> ${q.question}<br><br>
+<input type="number" id="num${index}">
+`;
+}
+
+quiz.appendChild(div);
+});
+
+// =====================
+// TIMER
+// =====================
+
+let total=180*60;
+let timer=document.getElementById("timer");
+
+let countdown=setInterval(()=>{
+let m=Math.floor(total/60);
+let s=total%60;
+timer.innerText=`Time Left: ${m}:${s<10?"0":""}${s}`;
+total--;
+if(total<0){
+clearInterval(countdown);
+submitTest();
+}
+},1000);
+
+// =====================
+// SUBMIT + ANALYTICS
+// =====================
+
+function submitTest(){
+
+clearInterval(countdown);
+
+let score=0;
+
+questions.forEach((q,index)=>{
+
+if(!weakTracker[q.chapter]) weakTracker[q.chapter]={correct:0,total:0};
+
+weakTracker[q.chapter].total++;
+
+if(q.type=="mcq"){
+let sel=document.querySelector(`input[name="q${index}"]:checked`);
+if(sel && parseInt(sel.value)==q.answer){
+score+=4;
+weakTracker[q.chapter].correct++;
+}
+else if(sel){
+score-=1;
+}
+}
+else{
+let val=document.getElementById("num"+index).value;
+if(val==q.answer){
+score+=4;
+weakTracker[q.chapter].correct++;
+}
+}
+});
+
+// ANALYTICS
+
+let weakChapters="";
+
+for(let ch in weakTracker){
+let acc=(weakTracker[ch].correct/weakTracker[ch].total)*100;
+if(acc<50){
+weakChapters+=`${ch} (${acc.toFixed(1)}%)<br>`;
+}
+}
+
+document.getElementById("result").innerHTML=`
+<div class="result">
+Final Score: ${score} / 360
+</div>
+<div class="analytics">
+<h3>Weak Chapters</h3>
+${weakChapters || "None 🎯"}
+</div>
+`;
+
+}
+
+</script>
+</body>
+</html>
