@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>JEE Main 2026 Advanced Mock</title>
+<style>
+body{font-family:Arial;margin:0;background:#f4f6f9;}
+header{background:#0d47a1;color:white;padding:10px;display:flex;justify-content:space-between;}
+#timer{font-weight:bold;font-size:18px;}
+.container{display:flex;}
+#questionArea{width:70%;padding:20px;}
+#palette{width:30%;background:white;height:90vh;overflow:auto;padding:10px;border-left:2px solid #ddd;}
+.question-box{background:white;padding:15px;border-radius:8px;}
+button{padding:8px 14px;margin:5px;border:none;border-radius:4px;cursor:pointer;}
+.nav{background:#1565c0;color:white;}
+.submit{background:green;color:white;font-size:16px;}
+.palette-btn{width:38px;height:38px;margin:3px;border-radius:4px;}
+.attempted{background:#4caf50;color:white;}
+.review{background:#ff9800;color:white;}
+.notvisited{background:#ccc;}
+.stats{margin-top:10px;font-size:14px;}
+input[type=number]{padding:6px;font-size:14px;width:150px;}
+</style>
+</head>
+
+<body>
+
+<header>
+<h3>JEE MAIN 2026 - ADVANCED MOCK SYSTEM</h3>
+<div>Time Left: <span id="timer">180:00</span></div>
+</header>
+
+<div class="container">
+
+<div id="questionArea">
+<div id="questionBox"></div>
+
+<button class="nav" onclick="prevQ()">Previous</button>
+<button class="nav" onclick="markReview()">Mark for Review</button>
+<button class="nav" onclick="nextQ()">Next</button>
+<br>
+<button class="submit" onclick="submitTest()">Submit Test</button>
+
+<div id="result"></div>
+</div>
+
+<div id="palette"></div>
+
+</div>
+
+<script>
+
+let current=0;
+let time=180*60;
+
+const questions=[];
+const userAns={};
+const reviewMark={};
+
+// ---------- QUESTION BUILDERS ----------
+
+function addMCQ(section,q,opts,ans,difficulty){
+questions.push({section,q,options:opts,answer:ans,type:"mcq",difficulty});
+}
+
+function addInteger(section,q,ans,difficulty){
+questions.push({section,q,answer:ans,type:"integer",difficulty});
+}
+
+// ---------- GENERATE FULL 90 QUESTIONS ----------
+
+// Physics
+for(let i=1;i<=20;i++){
+addMCQ("Physics","Hard Physics MCQ "+i,
+["Option A","Option B","Option C","Option D"],
+["A","B","C","D"][Math.floor(Math.random()*4)],
+Math.floor(Math.random()*3)+1);
+}
+for(let i=1;i<=10;i++){
+addInteger("Physics","Very Hard Physics Integer "+i,
+Math.floor(Math.random()*20)+1,3);
+}
+
+// Chemistry
+for(let i=1;i<=20;i++){
+addMCQ("Chemistry","Hard Chemistry MCQ "+i,
+["Option A","Option B","Option C","Option D"],
+["A","B","C","D"][Math.floor(Math.random()*4)],
+Math.floor(Math.random()*3)+1);
+}
+for(let i=1;i<=10;i++){
+addInteger("Chemistry","Very Hard Chemistry Integer "+i,
+Math.floor(Math.random()*20)+1,3);
+}
+
+// Mathematics
+for(let i=1;i<=20;i++){
+addMCQ("Mathematics","Hard Maths MCQ "+i,
+["Option A","Option B","Option C","Option D"],
+["A","B","C","D"][Math.floor(Math.random()*4)],
+Math.floor(Math.random()*3)+1);
+}
+for(let i=1;i<=10;i++){
+addInteger("Mathematics","Very Hard Maths Integer "+i,
+Math.floor(Math.random()*20)+1,3);
+}
+
+// ---------- LOAD QUESTION ----------
+
+function loadQ(){
+let q=questions[current];
+let html="<div class='question-box'>";
+html+="<h3>Q"+(current+1)+". ("+q.section+") "+q.q+"</h3>";
+
+if(q.type==="mcq"){
+q.options.forEach((opt,i)=>{
+let val=["A","B","C","D"][i];
+html+=`<input type='radio' name='opt' value='${val}'
+${userAns[current]==val?"checked":""}
+onchange="saveAns('${val}')"> ${val}) ${opt}<br>`;
+});
+}else{
+html+=`<input type="number"
+value="${userAns[current]||""}"
+onchange="saveInteger(this.value)"
+placeholder="Enter Integer Answer">`;
+}
+
+html+="</div>";
+document.getElementById("questionBox").innerHTML=html;
+updatePalette();
+}
+
+function saveAns(v){userAns[current]=v;updatePalette();}
+function saveInteger(v){userAns[current]=parseInt(v);updatePalette();}
+
+function nextQ(){if(current<89){current++;loadQ();}}
+function prevQ(){if(current>0){current--;loadQ();}}
+
+function markReview(){reviewMark[current]=true;updatePalette();}
+
+// ---------- PALETTE ----------
+
+function updatePalette(){
+let html="";
+let attempted=0;
+
+for(let i=0;i<90;i++){
+let cls="notvisited";
+if(userAns[i]!=null){cls="attempted";attempted++;}
+if(reviewMark[i]) cls="review";
+
+html+=`<button class='palette-btn ${cls}' onclick='go(${i})'>${i+1}</button>`;
+}
+
+html+=`<div class='stats'>
+Attempted: ${attempted}<br>
+Not Attempted: ${90-attempted}
+</div>`;
+
+document.getElementById("palette").innerHTML=html;
+}
+
+function go(i){current=i;loadQ();}
+
+// ---------- TIMER ----------
+
+setInterval(function(){
+let m=Math.floor(time/60);
+let s=time%60;
+document.getElementById("timer").innerText=
+m+":"+(s<10?"0":"")+s;
+
+if(time<=0) submitTest();
+time--;
+},1000);
+
+// ---------- SUBMIT + SECTION B LOGIC ----------
+
+function submitTest(){
+
+let score=0;
+
+let sectionBCount={
+Physics:0,
+Chemistry:0,
+Mathematics:0
+};
+
+for(let i=0;i<questions.length;i++){
+
+let q=questions[i];
+let given=userAns[i];
+
+if(q.type==="mcq"){
+if(given){
+if(given===q.answer) score+=4;
+else score-=1;
+}
+}
+else if(q.type==="integer"){
+if(given!=null){
+sectionBCount[q.section]++;
+if(sectionBCount[q.section]<=5){
+if(given==q.answer) score+=4;
+}
+}
+}
+}
+
+let percentile=Math.max(0,(score/360)*100);
+let rank=Math.floor((100-percentile)*15000);
+
+localStorage.setItem("jeeLastScore",score);
+
+let avgDifficulty=
+questions.reduce((sum,q)=>sum+q.difficulty,0)/90;
+
+document.getElementById("result").innerHTML=
+`<h2>Score: ${score}/360</h2>
+Percentile (Approx): ${percentile.toFixed(2)}<br>
+Predicted Rank (Approx): ${rank}<br>
+Average Difficulty: ${avgDifficulty.toFixed(2)}<br>
+Last Saved Score: ${localStorage.getItem("jeeLastScore")}<br>
+(Section B counted max 5 per subject)`;
+}
+
+// ---------- INIT ----------
+loadQ();
+
+</script>
+
+</body>
+</html>
